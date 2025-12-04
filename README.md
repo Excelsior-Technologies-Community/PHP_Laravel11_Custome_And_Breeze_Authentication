@@ -1,66 +1,196 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Laravel 11 Authentication
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## ⭐ Project Overview
 
-## About Laravel
+This project demonstrates how to implement **authentication in Laravel 11** for both **Admin** and **Customer** users:
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Admin Authentication**
+  - Implemented using **Laravel Breeze**
+  - Uses default `users` table
+  - Provides login and registration routes
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Customer Authentication**
+  - Custom login and registration system
+  - Uses a separate `customers` table
+  - Each customer has:
+    - `name`, `email`, `password`
+    - `status` (active/inactive)
+    - `created_by`, `updated_by`
+    - Soft deletes support
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+This tutorial is beginner-friendly and follows a **step-by-step structure** with proper explanations, routes, models, and controllers.
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 🔹 Step 1: Install Laravel 11
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+```bash
+composer create-project laravel/laravel:^11.0 laravel11-authentication
+cd laravel11-authentication
+🔹 Step 2: Configure Database
+Open .env file and update database credentials:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+env
+Copy code
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=laravel11_auth
+DB_USERNAME=root
+DB_PASSWORD=
 
-## Laravel Sponsors
+🔹 Step 3: Create Customers Table Migration
+bash
+Copy code
+php artisan make:migration create_customers_table --create=customers
+Add fields: name, email, password, status, created_by, updated_by, timestamps, softDeletes.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+🔹 Step 4: Run Migrations
+bash
+Copy code
+php artisan migrate
+This will create both users and customers tables.
 
-### Premium Partners
+🔹 Step 5: Create Customer Model
+bash
+Copy code
+php artisan make:model Customer
+Extend Authenticatable
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+Include Notifiable and SoftDeletes
 
-## Contributing
+Define fillable, hidden, and dates properties
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+🔹 Step 6: Configure Auth Guards
+Edit config/auth.php:
 
-## Code of Conduct
+Add a new guard for customers:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+php
+Copy code
+'guards' => [
+    'web' => [
+        'driver' => 'session',
+        'provider' => 'users',
+    ],
+    'customer' => [
+        'driver' => 'session',
+        'provider' => 'customers',
+    ],
+],
+Add a provider for customers:
 
-## Security Vulnerabilities
+php
+Copy code
+'providers' => [
+    'users' => [
+        'driver' => 'eloquent',
+        'model' => App\Models\User::class,
+    ],
+    'customers' => [
+        'driver' => 'eloquent',
+        'model' => App\Models\Customer::class,
+    ],
+],
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+🔹 Step 7: Create Customer Authentication Controller
+bash
+Copy code
+php artisan make:controller Customer/AuthController
+Handles:
 
-## License
+Customer Registration
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Customer Login
+
+Dashboard Access
+
+Logout
+
+Uses the customer guard
+
+🔹 Step 8: Add Customer Routes
+Edit routes/web.php:
+
+Prefix routes with /customer
+
+Group routes for:
+
+Registration (GET / POST)
+
+Login (GET / POST)
+
+Dashboard (protected with auth:customer)
+
+Logout
+
+🔹 Step 9: Create Views
+Place Blade files under:
+
+swift
+Copy code
+resources/views/customer/auth/
+register.blade.php
+
+login.blade.php
+
+dashboard.blade.php
+
+TailwindCSS used for modern UI styling
+
+🔹 Step 10: Install Laravel Breeze for Admin Authentication
+bash
+Copy code
+composer require laravel/breeze --dev
+php artisan breeze:install
+npm install
+npm run build
+php artisan migrate
+Admin can login/register at /login and /register
+
+Uses default users table
+
+🔹 Step 11: Full File Structure
+swift
+Copy code
+laravel11-authentication/
+│
+├── app/Models/Customer.php
+├── app/Http/Controllers/Customer/AuthController.php
+├── routes/web.php
+├── resources/views/customer/auth/
+│       ├── register.blade.php
+│       ├── login.blade.php
+│       └── dashboard.blade.php
+├── resources/views/auth/        // Breeze admin views
+├── database/migrations/
+│       ├── 2014_…_create_users_table.php  // admin
+│       └── 2025_…_create_customers_table.php  // customer
+└── .env
+🔹 Step 12: Useful Artisan Commands
+bash
+Copy code
+# Run migrations
+php artisan migrate
+
+# Rollback last migration batch
+php artisan migrate:rollback
+
+# Create new controller
+php artisan make:controller ControllerName
+
+# Create new model
+php artisan make:model ModelName
+
+# Serve the project
+php artisan serve
+🎉 Conclusion
+Admin Authentication via Laravel Breeze (users table)
+
+Customer Authentication via custom system (customers table)
+
+Soft delete and separate guards for customers
+
+TailwindCSS-based modern UI for customer pages
+
+This project provides a solid foundation for multi-auth systems in Laravel 11.
