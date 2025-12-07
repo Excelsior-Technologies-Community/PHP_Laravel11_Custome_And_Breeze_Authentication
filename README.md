@@ -100,10 +100,11 @@ return new class extends Migration
 ---
 
 ```
+```
 ## ⭐ Step 4: Default Users Table (Admin)
 
 Already provided by Laravel. No modification required.
-
+```
 ---
 
 <?php
