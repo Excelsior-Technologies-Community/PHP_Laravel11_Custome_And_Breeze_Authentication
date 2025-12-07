@@ -69,32 +69,62 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Create the customers table.
-     * This table is used only for customer login (not admin).
+     * Run the migrations.
+     * This method is executed when we run: php artisan migrate
      */
     public function up(): void
     {
+        // Create the 'customers' table
         Schema::create('customers', function (Blueprint $table) {
-            $table->id();                     // Primary key
-            $table->string('name');           // Customer name
-            $table->string('email')->unique();// Login email
-            $table->string('password');       // Hashed password
 
-            $table->enum('status', ['active','inactive'])->default('active');
+            $table->id(); 
+            // Primary key (Auto-increment ID)
 
-            $table->foreignId('created_by')->nullable()->constrained('users')->cascadeOnDelete();
-            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('name'); 
+            // Customer full name
 
-            $table->timestamps();
-            $table->softDeletes();
+            $table->string('email')->unique(); 
+            // Customer email (used for login, must be unique)
+
+            $table->string('password'); 
+            // Stores hashed password
+
+            $table->enum('status', ['active', 'inactive'])->default('active'); 
+            // Account status: active or inactive
+
+            $table->foreignId('created_by')
+                  ->nullable()
+                  ->constrained('users')
+                  ->cascadeOnDelete();
+            // Admin user who created this customer
+            // If admin is deleted → customer record will also be deleted
+
+            $table->foreignId('updated_by')
+                  ->nullable()
+                  ->constrained('users')
+                  ->nullOnDelete();
+            // Admin user who last updated this customer
+            // If admin is deleted → set updated_by to NULL
+
+            $table->timestamps(); 
+            // created_at & updated_at timestamps
+
+            $table->softDeletes(); 
+            // deleted_at column for soft delete functionality
         });
     }
 
+    /**
+     * Reverse the migrations.
+     * This method runs when: php artisan migrate:rollback
+     */
     public function down(): void
     {
+        // Drop the 'customers' table if it exists
         Schema::dropIfExists('customers');
     }
 };
+
 ```
 
 ## ⭐ Step 4: Default Users Table (Admin)
@@ -175,17 +205,52 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Customer Model
+ * ----------------
+ * This model represents the `customers` table.
+ * It is used for CUSTOM CUSTOMER AUTHENTICATION
+ * and works separately from the default User model (admins).
+ */
 class Customer extends Authenticatable
 {
+    // Enables notification support & soft delete feature
     use Notifiable, SoftDeletes;
 
+    /**
+     * The attributes that are mass assignable.
+     * -----------------------------------------
+     * These fields can be filled using:
+     * Customer::create([...])
+     */
     protected $fillable = [
-        'name', 'email', 'password', 'status', 'created_by', 'updated_by'
+        'name',        // Customer full name
+        'email',       // Customer email (used for login)
+        'password',    // Encrypted password
+        'status',      // active / inactive
+        'created_by',  // Admin ID who created customer
+        'updated_by'   // Admin ID who last updated customer
     ];
 
-    protected $hidden = ['password'];
-    protected $dates = ['deleted_at'];
+    /**
+     * Attributes hidden from arrays & JSON responses
+     * ----------------------------------------------
+     * Password will never be exposed accidentally
+     */
+    protected $hidden = [
+        'password'
+    ];
+
+    /**
+     * Date attributes used for soft deletes
+     * -------------------------------------
+     * deleted_at column is handled automatically
+     */
+    protected $dates = [
+        'deleted_at'
+    ];
 }
+
 ```
 
 ---
@@ -241,56 +306,121 @@ use App\Models\Customer;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
+/**
+ * Customer Authentication Controller
+ * -----------------------------------
+ * This controller handles:
+ *  - Customer Registration
+ *  - Customer Login
+ *  - Customer Dashboard access
+ *  - Customer Logout
+ *
+ * It uses the custom "customer" guard
+ * defined in config/auth.php
+ */
 class AuthController extends Controller
 {
+    /**
+     * Show customer registration form
+     * --------------------------------
+     * Returns: resources/views/customer/auth/register.blade.php
+     */
     public function showRegisterForm()
     {
         return view('customer.auth.register');
     }
 
+    /**
+     * Handle customer registration
+     * -----------------------------
+     * Steps:
+     * 1. Validate request data
+     * 2. Hash customer password
+     * 3. Save customer in database
+     * 4. Redirect to login page
+     */
     public function register(Request $request)
     {
+        // Validate form inputs
         $request->validate([
-            'name' => 'required',
-            'email' => 'required|email|unique:customers,email',
+            'name'     => 'required',
+            'email'    => 'required|email|unique:customers,email',
             'password' => 'required|min:6|confirmed'
         ]);
 
-        Customer::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'status' => 'active',
-            'created_by' => null
+        // Create customer record
+        $customer = Customer::create([
+            'name'       => $request->name,
+            'email'      => $request->email,
+            'password'   => Hash::make($request->password), // encrypt password
+            'status'     => 'active',                       // default status
+            'created_by' => null                            // no admin at signup
         ]);
 
-        return redirect()->route('customer.login')->with('success','Registration successful');
+        // Redirect to login page after successful registration
+        return redirect()->route('customer.login')
+                         ->with('success', 'Registration successful!');
     }
 
+    /**
+     * Show customer login form
+     * ------------------------
+     * Returns: resources/views/customer/auth/login.blade.php
+     */
     public function showLoginForm()
     {
         return view('customer.auth.login');
     }
 
+    /**
+     * Handle customer login
+     * ----------------------
+     * Steps:
+     * 1. Get email & password
+     * 2. Attempt login using customer guard
+     * 3. Redirect to dashboard if success
+     * 4. Show error if credentials invalid
+     */
     public function login(Request $request)
     {
-        if (Auth::guard('customer')->attempt($request->only('email','password'))) {
+        // Extract only email & password from request
+        $credentials = $request->only('email', 'password');
+
+        // Attempt authentication using customer guard
+        if (Auth::guard('customer')->attempt($credentials)) {
             return redirect()->route('customer.dashboard');
         }
-        return back()->withErrors(['email' => 'Invalid credentials']);
+
+        // Login failed
+        return back()->withErrors([
+            'email' => 'Invalid credentials'
+        ]);
     }
 
+    /**
+     * Customer Dashboard
+     * -------------------
+     * Accessible only after customer login
+     */
     public function dashboard()
     {
         return view('customer.auth.dashboard');
     }
 
+    /**
+     * Customer Logout
+     * ----------------
+     * Logs out authenticated customer
+     * and redirects to login page
+     */
     public function logout()
     {
         Auth::guard('customer')->logout();
+
         return redirect()->route('customer.login');
     }
 }
+
 ```
 
 ---
@@ -300,19 +430,133 @@ class AuthController extends Controller
 **File:** `routes/web.php`
 
 ```php
+<?php
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+| Here is where you can register web routes for your application.
+| These routes are loaded by the RouteServiceProvider.
+| They all receive the "web" middleware group.
+*/
+
+use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Customer\AuthController;
 
-Route::prefix('customer')->name('customer.')->group(function () {
-    Route::get('register', [AuthController::class,'showRegisterForm'])->name('register');
-    Route::post('register', [AuthController::class,'register']);
-
-    Route::get('login', [AuthController::class,'showLoginForm'])->name('login');
-    Route::post('login', [AuthController::class,'login']);
-
-    Route::get('dashboard', [AuthController::class,'dashboard'])->middleware('auth:customer')->name('dashboard');
-
-    Route::get('logout', [AuthController::class,'logout'])->name('logout');
+/*
+|--------------------------------------------------------------------------
+| Default Welcome Page Route
+|--------------------------------------------------------------------------
+| Loads Laravel's default welcome page
+*/
+Route::get('/', function () {
+    return view('welcome');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Default Dashboard Route (Admin/User)
+|--------------------------------------------------------------------------
+| Protected by "auth" and "verified" middleware
+| Only logged-in and verified users can access this page
+*/
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
+
+/*
+|--------------------------------------------------------------------------
+| Profile Routes (Default Laravel Authentication)
+|--------------------------------------------------------------------------
+| These routes are used for the default users table
+| Access is limited to authenticated users only
+*/
+Route::middleware('auth')->group(function () {
+
+    // Show profile edit page
+    Route::get('/profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
+
+    // Update profile data
+    Route::patch('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
+
+    // Delete user account
+    Route::delete('/profile', [ProfileController::class, 'destroy'])
+        ->name('profile.destroy');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Customer Authentication Routes
+|--------------------------------------------------------------------------
+| Separate authentication system for customers
+| Uses custom customers table and customer guard
+*/
+Route::prefix('customer')->name('customer.')->group(function(){
+
+    /*
+    |--------------------------------------------------------------
+    | Customer Registration Routes
+    |--------------------------------------------------------------
+    */
+
+    // Show customer registration form
+    Route::get('register', [AuthController::class, 'showRegisterForm'])
+        ->name('register');
+
+    // Handle customer registration form submission
+    Route::post('register', [AuthController::class, 'register']);
+
+
+    /*
+    |--------------------------------------------------------------
+    | Customer Login Routes
+    |--------------------------------------------------------------
+    */
+
+    // Show customer login form
+    Route::get('login', [AuthController::class, 'showLoginForm'])
+        ->name('login');
+
+    // Handle customer login request
+    Route::post('login', [AuthController::class, 'login']);
+
+
+    /*
+    |--------------------------------------------------------------
+    | Customer Dashboard Route
+    |--------------------------------------------------------------
+    | Protected using "auth:customer" middleware
+    | Only logged-in customers can access this route
+    */
+
+    Route::get('dashboard', [AuthController::class, 'dashboard'])
+        ->middleware('auth:customer')
+        ->name('dashboard');
+
+
+    /*
+    |--------------------------------------------------------------
+    | Customer Logout Route
+    |--------------------------------------------------------------
+    */
+
+    // Logout customer and redirect to login page
+    Route::get('logout', [AuthController::class, 'logout'])
+        ->name('logout');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Authentication Routes (Laravel Breeze / Jetstream)
+|--------------------------------------------------------------------------
+| Handles login, register, password reset for default users
+*/
+require __DIR__.'/auth.php';
+
 ```
 
 ---
@@ -339,19 +583,21 @@ resources/views/customer/auth/register.blade.php
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+
+    <!-- Responsive layout for mobile, tablet and desktop -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Page Title -->
     <title>Customer Register</title>
 
-    <!-- TailwindCSS CDN for modern UI styling -->
+    <!-- Tailwind CSS CDN for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<!-- Background + Center Layout -->
+<!-- Full-screen center alignment -->
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
-    <!-- Main Card Container -->
+    <!-- Main Registration Card -->
     <div class="bg-white shadow-lg rounded-lg w-full max-w-md p-8">
 
         <!-- Page Heading -->
@@ -359,14 +605,20 @@ resources/views/customer/auth/register.blade.php
             Customer Register
         </h2>
 
-        <!-- SUCCESS MESSAGE (After registration success) -->
+        <!-- ===============================
+             SUCCESS MESSAGE
+             Displayed after successful registration
+        ================================== -->
         @if(session('success'))
             <div class="bg-green-100 text-green-700 p-3 rounded mb-4">
                 {{ session('success') }}
             </div>
         @endif
 
-        <!-- VALIDATION ERRORS (If form inputs are invalid) -->
+        <!-- ===============================
+             VALIDATION ERROR MESSAGES
+             Displayed when form input fails validation
+        ================================== -->
         @if($errors->any())
             <div class="bg-red-100 text-red-700 p-3 rounded mb-4">
                 <ul class="list-disc list-inside">
@@ -377,75 +629,99 @@ resources/views/customer/auth/register.blade.php
             </div>
         @endif
 
-
-        <!-- ===========================
-             REGISTRATION FORM
-        ===============================-->
+        <!-- ===============================
+             CUSTOMER REGISTRATION FORM
+        ================================== -->
         <form action="{{ route('customer.register') }}" method="POST" class="space-y-5">
 
-            <!-- CSRF Token for Form Security -->
+            <!-- CSRF Token: Required for form security -->
             @csrf
 
-            <!-- Name Input Field -->
+            <!-- Customer Name Field -->
             <div>
-                <label class="block text-gray-700 mb-1" for="name">Name</label>
+                <label class="block text-gray-700 mb-1" for="name">
+                    Name
+                </label>
 
-                <!-- User name input box -->
-                <input type="text" name="name" id="name" placeholder="Enter your name"
+                <input
+                    type="text"
+                    name="name"
+                    id="name"
+                    placeholder="Enter your name"
                     class="w-full border border-gray-300 rounded px-4 py-2
                            focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required>
+                    required
+                >
             </div>
 
-            <!-- Email Input Field -->
+            <!-- Customer Email Field -->
             <div>
-                <label class="block text-gray-700 mb-1" for="email">Email</label>
+                <label class="block text-gray-700 mb-1" for="email">
+                    Email
+                </label>
 
-                <!-- User email input box -->
-                <input type="email" name="email" id="email" placeholder="Enter your email"
+                <input
+                    type="email"
+                    name="email"
+                    id="email"
+                    placeholder="Enter your email"
                     class="w-full border border-gray-300 rounded px-4 py-2
                            focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required>
+                    required
+                >
             </div>
 
-            <!-- Password Input Field -->
+            <!-- Password Field -->
             <div>
-                <label class="block text-gray-700 mb-1" for="password">Password</label>
+                <label class="block text-gray-700 mb-1" for="password">
+                    Password
+                </label>
 
-                <!-- User password input box -->
-                <input type="password" name="password" id="password" placeholder="Enter your password"
+                <input
+                    type="password"
+                    name="password"
+                    id="password"
+                    placeholder="Enter your password"
                     class="w-full border border-gray-300 rounded px-4 py-2
                            focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required>
+                    required
+                >
             </div>
 
             <!-- Confirm Password Field -->
             <div>
-                <label class="block text-gray-700 mb-1" for="password_confirmation">Confirm Password</label>
+                <label class="block text-gray-700 mb-1" for="password_confirmation">
+                    Confirm Password
+                </label>
 
-                <!-- Re-enter password for validation -->
-                <input type="password" name="password_confirmation" id="password_confirmation"
+                <input
+                    type="password"
+                    name="password_confirmation"
+                    id="password_confirmation"
                     placeholder="Confirm your password"
                     class="w-full border border-gray-300 rounded px-4 py-2
                            focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required>
+                    required
+                >
             </div>
 
-            <!-- Submit Button -->
-            <button type="submit"
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4
-                       rounded transition duration-200">
+            <!-- Register Button -->
+            <button
+                type="submit"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold
+                       py-2 px-4 rounded transition duration-200"
+            >
                 Register
             </button>
         </form>
 
-
-        <!-- Link to Login Page -->
+        <!-- Redirect to Login Page -->
         <div class="text-center mt-5">
             <p class="text-gray-600">
-                Already have an account? 
-                <a href="{{ route('customer.login') }}" class="text-blue-600 hover:underline">
-                    Login here
+                Already have an account?
+                <a href="{{ route('customer.login') }}"
+                   class="text-blue-600 hover:underline">
+                   Login here
                 </a>
             </p>
         </div>
@@ -453,6 +729,7 @@ resources/views/customer/auth/register.blade.php
     </div>
 </body>
 </html>
+
 
 ```
 🔷 View 2: Customer Login
