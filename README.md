@@ -932,7 +932,7 @@ Uses **users** table.
 ## 📁 Final Project Structure
 
 ```
-laravel11-authentication
+PHP_Laravel11_Custome_And_Breeze_Authentication
 ├── app/Models/Customer.php
 ├── app/Http/Controllers/Customer/AuthController.php
 ├── routes/web.php
@@ -949,4 +949,4 @@ laravel11-authentication
 
 ---
 
-🎉 **Your Laravel 11 Admin + Customer Authentication tutorial is complete and production-ready!**
+🎉 **Your PHP_Laravel11_Custome_And_Breeze_Authentication tutorial is complete and production-ready!**
