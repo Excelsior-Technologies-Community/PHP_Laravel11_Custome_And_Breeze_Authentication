@@ -37,8 +37,8 @@ This tutorial is:
 ## ⭐ Step 1: Install Laravel 11
 
 ```bash
-composer create-project laravel/laravel:^11.0 PHP_Laravel12_Custome_Authentication_&_Breeze_Authentication
-cd PHP_Laravel12_Custome_Authentication_&_Breeze_Authentication
+composer create-project laravel/laravel:^11.0 PHP_Laravel12_Custome_Authentication_Breeze_Authentication
+cd PHP_Laravel12_Custome_Authentication_Breeze_Authentication
 ```
 
 ---
