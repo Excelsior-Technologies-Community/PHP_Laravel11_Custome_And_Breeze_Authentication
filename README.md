@@ -1,18 +1,18 @@
-# ✅ PHP_Laravel11_Custome_And_Breeze_Authentication
+# PHP_Laravel11_Custome_And_Breeze_Authentication
 
 
 ---
 
-## ⭐ Introduction
+##  Introduction
 
 This tutorial demonstrates how to implement **Authentication in Laravel 11** with **two separate roles**:
 
-### 🔹 Admin Authentication
+###  Admin Authentication
 
 * Implemented using **Laravel Breeze**
 * Uses the default `users` table
 
-### 🔹 Customer Authentication
+###  Customer Authentication
 
 * Custom Login & Registration (no Breeze)
 * Uses a **separate `customers` table**
@@ -25,17 +25,10 @@ This tutorial demonstrates how to implement **Authentication in Laravel 11** wit
   * created_by
   * updated_by
   * soft deletes
-
-This tutorial is:
-
-✅ Beginner-friendly
-✅ Step-by-step
-✅ Interview-focused
-✅ Cleanly structured with real-world Laravel practices
-
+  * 
 ---
 
-## ⭐ Step 1: Install Laravel 11
+##  Step 1: Install Laravel 11
 
 ```bash
 composer create-project laravel/laravel:^11.0 PHP_Laravel11_Custome_And_Breeze_Authentication
@@ -44,7 +37,7 @@ cd PHP_Laravel11_Custome_And_Breeze_Authentication
 
 ---
 
-## ⭐ Step 2: Configure Database
+##  Step 2: Configure Database
 
 Open **.env** file and update:
 
@@ -56,7 +49,7 @@ DB_PASSWORD=
 
 ---
 
-## ⭐ Step 3: Create Customers Table Migration
+##  Step 3: Create Customers Table Migration
 
 **File:** `database/migrations/xxxx_create_customers_table.php`
 
@@ -128,7 +121,7 @@ return new class extends Migration
 
 ```
 
-## ⭐ Step 4: Default Users Table (Admin)
+##  Step 4: Default Users Table (Admin)
 
 Already provided by Laravel. No modification required.
 ```
@@ -185,7 +178,7 @@ return new class extends Migration
 
 ```
 
-## ⭐ Step 5: Run Migration
+##  Step 5: Run Migration
 
 ```bash
 php artisan migrate
@@ -193,7 +186,7 @@ php artisan migrate
 
 ---
 
-## ⭐ Step 6: Create Customer Model
+##  Step 6: Create Customer Model
 
 **File:** `app/Models/Customer.php`
 
@@ -256,7 +249,7 @@ class Customer extends Authenticatable
 
 ---
 
-## ⭐ Step 7: Configure Authentication Guards
+##  Step 7: Configure Authentication Guards
 
 **File:** `config/auth.php`
 
@@ -288,7 +281,7 @@ Add customer guard and provider:
 
 ---
 
-## ⭐ Step 8: Create Customer Auth Controller
+##  Step 8: Create Customer Auth Controller
 
 ```bash
 php artisan make:controller Customer/AuthController
@@ -426,7 +419,7 @@ class AuthController extends Controller
 
 ---
 
-## ⭐ Step 9: Customer Routes
+##  Step 9: Customer Routes
 
 **File:** `routes/web.php`
 
@@ -562,7 +555,7 @@ require __DIR__.'/auth.php';
 
 ---
 
-## ⭐ Step 10: Customer Views
+##  Step 10: Customer Views
 
 All Tailwind-based views:
 
@@ -573,7 +566,7 @@ resources/views/customer/auth/
 └── dashboard.blade.php
 ```
 
-🔷 View 1: Customer Register
+ View 1: Customer Register
 
 resources/views/customer/auth/register.blade.php
 
@@ -733,7 +726,7 @@ resources/views/customer/auth/register.blade.php
 
 
 ```
-🔷 View 2: Customer Login
+ View 2: Customer Login
 
 resources/views/customer/auth/login.blade.php
 ```
@@ -838,7 +831,7 @@ resources/views/customer/auth/login.blade.php
 </html>
 
 ```
-🔷 View 3: Customer Dashboard
+ View 3: Customer Dashboard
 
 resources/views/customer/auth/dashboard.blade.php
 ```
@@ -910,7 +903,7 @@ resources/views/customer/auth/dashboard.blade.php
 </html>
 
 ```
-## ⭐ Step 11: Install Breeze for Admin Authentication
+##  Step 11: Install Breeze for Admin Authentication
 
 ```bash
 composer require laravel/breeze
@@ -929,7 +922,7 @@ Uses **users** table.
 
 ---
 
-## 📁 Final Project Structure
+##  Final Project Structure
 
 ```
 PHP_Laravel11_Custome_And_Breeze_Authentication
