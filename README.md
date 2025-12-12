@@ -939,7 +939,41 @@ PHP_Laravel11_Custome_And_Breeze_Authentication
 │   └── create_customers_table.php
 └── .env
 ```
+Output:
 
+Custome side Screen Shots:
 ---
+
+### Customer Registration
+
+<img width="1919" height="1095" alt="Screenshot 2025-12-12 121033" src="https://github.com/user-attachments/assets/e82b25c6-6917-422d-b2d1-8a5cfc4958c3" />
+
+
+### Customer Login
+
+<img width="1917" height="1087" alt="Screenshot 2025-12-12 121100" src="https://github.com/user-attachments/assets/73742992-5e47-449d-ad43-5e3f408304fd" />
+
+
+### Customer Dashboard
+
+<img width="1919" height="1087" alt="Screenshot 2025-12-12 121217" src="https://github.com/user-attachments/assets/bb7f749e-80dd-4008-8dee-e4d6e3407064" />
+
+Breeze side Screen Shots:
+---
+
+### Breeze Registration
+
+<img width="1919" height="1089" alt="Screenshot 2025-12-12 121330" src="https://github.com/user-attachments/assets/8911ec21-170d-418c-8c8f-e33bef67c707" />
+
+
+### Breeze Login
+
+<img width="1919" height="1094" alt="Screenshot 2025-12-12 121612" src="https://github.com/user-attachments/assets/3f2602c6-888e-4ff4-86e4-a53e7c313685" />
+
+
+### Breeze Dashboard
+
+<img width="1919" height="1081" alt="Screenshot 2025-12-12 121538" src="https://github.com/user-attachments/assets/c73cb926-1802-4d5c-9e6a-b599154a4e3b" />
+
 
 🎉 **Your PHP_Laravel11_Custome_And_Breeze_Authentication tutorial is complete and production-ready!**
