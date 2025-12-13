@@ -975,5 +975,6 @@ Breeze side Screen Shots:
 
 <img width="1919" height="1081" alt="Screenshot 2025-12-12 121538" src="https://github.com/user-attachments/assets/c73cb926-1802-4d5c-9e6a-b599154a4e3b" />
 
+---
 
-🎉 **Your PHP_Laravel11_Custome_And_Breeze_Authentication tutorial is complete and production-ready!**
+**Your PHP_Laravel11_Custome_And_Breeze_Authentication tutorial is complete and production-ready!**
