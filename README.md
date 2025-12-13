@@ -941,7 +941,7 @@ PHP_Laravel11_Custome_And_Breeze_Authentication
 ```
 Output:
 
-Custome side Screen Shots:
+Custome side Screenshots:
 ---
 
 ### Customer Registration
