@@ -25,7 +25,7 @@ This tutorial demonstrates how to implement **Authentication in Laravel 11** wit
   * created_by
   * updated_by
   * soft deletes
-  * 
+    
 ---
 
 ##  Step 1: Install Laravel 11
