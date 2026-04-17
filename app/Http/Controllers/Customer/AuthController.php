@@ -12,10 +12,10 @@ use Illuminate\Support\Facades\Hash;
  * Customer Authentication Controller
  * -----------------------------------
  * This controller handles:
- *  - Customer Registration
- *  - Customer Login
- *  - Customer Dashboard access
- *  - Customer Logout
+ * - Customer Registration
+ * - Customer Login
+ * - Customer Dashboard access
+ * - Customer Logout
  *
  * It uses the custom "customer" guard
  * defined in config/auth.php
@@ -79,23 +79,23 @@ class AuthController extends Controller
      * ----------------------
      * Steps:
      * 1. Get email & password
-     * 2. Attempt login using customer guard
+     * 2. Attempt login using customer guard with status check
      * 3. Redirect to dashboard if success
-     * 4. Show error if credentials invalid
+     * 4. Show error if credentials invalid or account inactive
      */
     public function login(Request $request)
     {
         // Extract only email & password from request
         $credentials = $request->only('email', 'password');
 
-        // Attempt authentication using customer guard
-        if (Auth::guard('customer')->attempt($credentials)) {
+        // Attempt authentication using customer guard with active status check
+        if (Auth::guard('customer')->attempt(array_merge($credentials, ['status' => 'active']))) {
             return redirect()->route('customer.dashboard');
         }
 
         // Login failed
         return back()->withErrors([
-            'email' => 'Invalid credentials'
+            'email' => 'Invalid credentials or your account is inactive.'
         ]);
     }
 
@@ -107,6 +107,40 @@ class AuthController extends Controller
     public function dashboard()
     {
         return view('customer.auth.dashboard');
+    }
+
+    /**
+     * Show customer profile edit form
+     */
+    public function editProfile()
+    {
+        $customer = Auth::guard('customer')->user();
+        return view('customer.auth.profile', compact('customer'));
+    }
+
+    /**
+     * Handle customer profile update
+     */
+    public function updateProfile(Request $request)
+    {
+        $customer = Auth::guard('customer')->user();
+
+        $request->validate([
+            'name'  => 'required',
+            'email' => 'required|email|unique:customers,email,' . $customer->id,
+            'password' => 'nullable|min:6|confirmed'
+        ]);
+
+        $customer->name = $request->name;
+        $customer->email = $request->email;
+
+        if ($request->filled('password')) {
+            $customer->password = Hash::make($request->password);
+        }
+
+        $customer->save();
+
+        return back()->with('success', 'Profile updated successfully!');
     }
 
     /**
