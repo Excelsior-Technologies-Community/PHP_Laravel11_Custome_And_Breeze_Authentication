@@ -1012,61 +1012,6 @@ Breeze side Screen Shots:
 
 
 
----
-Output:
----
-
-<<<<<<< HEAD
-Custome Side Register:
-
-```
-http://127.0.0.1:8000/customer/register
-```
-
-<img width="1919" height="1095" alt="Screenshot 2025-12-12 121033" src="https://github.com/user-attachments/assets/d3e94406-11bf-447c-8ae3-0232cae5b5ff" />
-
----
-Custome Side Login:
-
-```
-http://127.0.0.1:8000/customer/login
-```
-<img width="1917" height="1087" alt="Screenshot 2025-12-12 121100" src="https://github.com/user-attachments/assets/d0a9a29a-ea64-4692-a9bb-c97272e7c117" />
-
----
-Custome Side Dashboard:
-
-```
-http://127.0.0.1:8000/customer/dashboard
-```
-<img width="1919" height="1087" alt="Screenshot 2025-12-12 121217" src="https://github.com/user-attachments/assets/a851f656-e157-4bfd-9568-4746a40785e7" />
-
----
-Breeze Side Register:
-
-```
-http://127.0.0.1:8000/register
-```
-<img width="1919" height="1089" alt="Screenshot 2025-12-12 121330" src="https://github.com/user-attachments/assets/e92da2a3-4248-4f1c-83d9-9fb08785c457" />
-
----
-Breeze Side Login:
-
-```
-http://127.0.0.1:8000/login
-```
-<img width="1919" height="1094" alt="Screenshot 2025-12-12 121612" src="https://github.com/user-attachments/assets/f15bb953-6ada-4272-9443-862848b3566a" />
-
-Breeze Side Dashboard:
-
-```
-http://127.0.0.1:8000/dashboard
-```
-
-<img width="1919" height="1081" alt="Screenshot 2025-12-12 121538" src="https://github.com/user-attachments/assets/aa06dac4-b21e-431b-b802-df4e8055cc0d" />
-
----
-
 =======
 >>>>>>> development
 **Your PHP_Laravel11_Custome_And_Breeze_Authentication tutorial is complete and production-ready!**
