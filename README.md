@@ -32,7 +32,7 @@ This tutorial demonstrates how to implement **Authentication in Laravel 11** wit
 
 =======
     
->>>>>>> development
+
 ---
 
 ##  Step 1: Install Laravel 11
@@ -1011,6 +1011,4 @@ Breeze side Screen Shots:
 
 
 
-=======
->>>>>>> development
-**Your PHP_Laravel11_Custome_And_Breeze_Authentication tutorial is complete and production-ready!**
+
