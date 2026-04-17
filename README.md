@@ -1,8 +1,7 @@
 <<<<<<< HEAD
 #  PHP_Laravel11_Custome_And_Breeze_Authentication
 =======
-# PHP_Laravel11_Custome_And_Breeze_Authentication
->>>>>>> development
+
 
 
 ---
