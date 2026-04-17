@@ -996,7 +996,13 @@ Breeze side Screen Shots:
 
 ### Breeze Dashboard
 
-<img width="1919" height="1081" alt="Screenshot 2025-12-12 121538" src="https://github.com/user-attachments/assets/c73cb926-1802-4d5c-9e6a-b599154a4e3b" />
+<img width="1918" height="681" alt="Screenshot 2026-04-17 164913" src="https://github.com/user-attachments/assets/f8c9483f-64fd-4cf7-988e-bf22a3d482a3" />
+
+## Customer 
+
+<img width="1917" height="634" alt="Screenshot 2026-04-17 171133" src="https://github.com/user-attachments/assets/edd32666-c13d-4b3b-9c1c-7153154c22a7" />
+
+
 
 ---
 
