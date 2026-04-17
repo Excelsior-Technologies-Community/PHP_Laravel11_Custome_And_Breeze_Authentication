@@ -304,10 +304,10 @@ use Illuminate\Support\Facades\Hash;
  * Customer Authentication Controller
  * -----------------------------------
  * This controller handles:
- *  - Customer Registration
- *  - Customer Login
- *  - Customer Dashboard access
- *  - Customer Logout
+ * - Customer Registration
+ * - Customer Login
+ * - Customer Dashboard access
+ * - Customer Logout
  *
  * It uses the custom "customer" guard
  * defined in config/auth.php
@@ -371,23 +371,23 @@ class AuthController extends Controller
      * ----------------------
      * Steps:
      * 1. Get email & password
-     * 2. Attempt login using customer guard
+     * 2. Attempt login using customer guard with status check
      * 3. Redirect to dashboard if success
-     * 4. Show error if credentials invalid
+     * 4. Show error if credentials invalid or account inactive
      */
     public function login(Request $request)
     {
         // Extract only email & password from request
         $credentials = $request->only('email', 'password');
 
-        // Attempt authentication using customer guard
-        if (Auth::guard('customer')->attempt($credentials)) {
+        // Attempt authentication using customer guard with active status check
+        if (Auth::guard('customer')->attempt(array_merge($credentials, ['status' => 'active']))) {
             return redirect()->route('customer.dashboard');
         }
 
         // Login failed
         return back()->withErrors([
-            'email' => 'Invalid credentials'
+            'email' => 'Invalid credentials or your account is inactive.'
         ]);
     }
 
@@ -399,6 +399,40 @@ class AuthController extends Controller
     public function dashboard()
     {
         return view('customer.auth.dashboard');
+    }
+
+    /**
+     * Show customer profile edit form
+     */
+    public function editProfile()
+    {
+        $customer = Auth::guard('customer')->user();
+        return view('customer.auth.profile', compact('customer'));
+    }
+
+    /**
+     * Handle customer profile update
+     */
+    public function updateProfile(Request $request)
+    {
+        $customer = Auth::guard('customer')->user();
+
+        $request->validate([
+            'name'  => 'required',
+            'email' => 'required|email|unique:customers,email,' . $customer->id,
+            'password' => 'nullable|min:6|confirmed'
+        ]);
+
+        $customer->name = $request->name;
+        $customer->email = $request->email;
+
+        if ($request->filled('password')) {
+            $customer->password = Hash::make($request->password);
+        }
+
+        $customer->save();
+
+        return back()->with('success', 'Profile updated successfully!');
     }
 
     /**
@@ -426,129 +460,43 @@ class AuthController extends Controller
 ```php
 <?php
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-| Here is where you can register web routes for your application.
-| These routes are loaded by the RouteServiceProvider.
-| They all receive the "web" middleware group.
-*/
-
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Customer\AuthController;
 
-/*
-|--------------------------------------------------------------------------
-| Default Welcome Page Route
-|--------------------------------------------------------------------------
-| Loads Laravel's default welcome page
-*/
 Route::get('/', function () {
     return view('welcome');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Default Dashboard Route (Admin/User)
-|--------------------------------------------------------------------------
-| Protected by "auth" and "verified" middleware
-| Only logged-in and verified users can access this page
-*/
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-/*
-|--------------------------------------------------------------------------
-| Profile Routes (Default Laravel Authentication)
-|--------------------------------------------------------------------------
-| These routes are used for the default users table
-| Access is limited to authenticated users only
-*/
 Route::middleware('auth')->group(function () {
-
-    // Show profile edit page
-    Route::get('/profile', [ProfileController::class, 'edit'])
-        ->name('profile.edit');
-
-    // Update profile data
-    Route::patch('/profile', [ProfileController::class, 'update'])
-        ->name('profile.update');
-
-    // Delete user account
-    Route::delete('/profile', [ProfileController::class, 'destroy'])
-        ->name('profile.destroy');
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Customer Authentication Routes
-|--------------------------------------------------------------------------
-| Separate authentication system for customers
-| Uses custom customers table and customer guard
-*/
 Route::prefix('customer')->name('customer.')->group(function(){
 
-    /*
-    |--------------------------------------------------------------
-    | Customer Registration Routes
-    |--------------------------------------------------------------
-    */
-
-    // Show customer registration form
-    Route::get('register', [AuthController::class, 'showRegisterForm'])
-        ->name('register');
-
-    // Handle customer registration form submission
+    Route::get('register', [AuthController::class, 'showRegisterForm'])->name('register');
     Route::post('register', [AuthController::class, 'register']);
 
-
-    /*
-    |--------------------------------------------------------------
-    | Customer Login Routes
-    |--------------------------------------------------------------
-    */
-
-    // Show customer login form
-    Route::get('login', [AuthController::class, 'showLoginForm'])
-        ->name('login');
-
-    // Handle customer login request
+    Route::get('login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('login', [AuthController::class, 'login']);
 
-
-    /*
-    |--------------------------------------------------------------
-    | Customer Dashboard Route
-    |--------------------------------------------------------------
-    | Protected using "auth:customer" middleware
-    | Only logged-in customers can access this route
-    */
-
-    Route::get('dashboard', [AuthController::class, 'dashboard'])
-        ->middleware('auth:customer')
-        ->name('dashboard');
-
-
-    /*
-    |--------------------------------------------------------------
-    | Customer Logout Route
-    |--------------------------------------------------------------
-    */
-
-    // Logout customer and redirect to login page
-    Route::get('logout', [AuthController::class, 'logout'])
-        ->name('logout');
+    Route::middleware('auth:customer')->group(function () {
+        Route::get('dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
+        
+        // Profile Routes for Customer
+        Route::get('profile', [AuthController::class, 'editProfile'])->name('profile.edit');
+        Route::post('profile', [AuthController::class, 'updateProfile'])->name('profile.update');
+        
+        Route::get('logout', [AuthController::class, 'logout'])->name('logout');
+    });
 });
 
-/*
-|--------------------------------------------------------------------------
-| Authentication Routes (Laravel Breeze / Jetstream)
-|--------------------------------------------------------------------------
-| Handles login, register, password reset for default users
-*/
 require __DIR__.'/auth.php';
 
 ```
@@ -563,6 +511,7 @@ All Tailwind-based views:
 resources/views/customer/auth/
 ├── register.blade.php
 ├── login.blade.php
+├── profile.blade.php
 └── dashboard.blade.php
 ```
 
@@ -840,64 +789,123 @@ resources/views/customer/auth/dashboard.blade.php
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-
-    <!-- Ensure proper scaling on all devices -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Page Title -->
     <title>Customer Dashboard</title>
-
-    <!-- TailwindCSS CDN for modern UI styling -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-
-<!-- Full height + light gray background + column layout -->
 <body class="bg-gray-100 min-h-screen flex flex-col">
 
-    <!-- ===============================
-         TOP NAVBAR
-    ================================== -->
     <nav class="bg-white shadow px-6 py-4 flex justify-between items-center">
-
-        <!-- Dashboard Title -->
         <h1 class="text-xl font-bold text-gray-800">Customer Dashboard</h1>
 
-        <!-- Logout Button -->
-        <a href="{{ route('customer.logout') }}"
-           class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition duration-200">
-            Logout
-        </a>
+        <div class="flex space-x-3">
+            <a href="{{ route('customer.profile.edit') }}"
+               class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition duration-200">
+                Edit Profile
+            </a>
+            <a href="{{ route('customer.logout') }}"
+               class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition duration-200">
+                Logout
+            </a>
+        </div>
     </nav>
 
-
-    <!-- ===============================
-         MAIN DASHBOARD CONTENT
-    ================================== -->
     <div class="flex-grow flex items-center justify-center">
-
-        <!-- Dashboard Card -->
         <div class="bg-white shadow-lg rounded-lg w-full max-w-lg p-8 text-center">
+            @if(session('success'))
+                <div class="bg-green-100 text-green-700 p-3 rounded mb-4 text-sm">
+                    {{ session('success') }}
+                </div>
+            @endif
 
-            <!-- Logged-in Customer Name -->
             <h2 class="text-2xl font-semibold text-gray-800 mb-4">
                 Welcome, {{ Auth::guard('customer')->user()->name }}!
             </h2>
 
-            <!-- Simple dashboard description -->
             <p class="text-gray-600 mb-6">
                 You are successfully logged in to your customer account.
             </p>
-
+            
+            <div class="border-t pt-4">
+                <p class="text-sm text-gray-500 italic">Account Status: <span class="text-green-600 font-bold uppercase">{{ Auth::guard('customer')->user()->status }}</span></p>
+            </div>
         </div>
     </div>
 
-
-    <!-- ===============================
-         FOOTER SECTION
-    ================================== -->
     <footer class="bg-white shadow py-4 text-center text-gray-500">
         &copy; {{ date('Y') }} Your Company. All rights reserved.
     </footer>
+
+</body>
+</html>
+
+```
+ View 3: Customer Dashboard
+
+resources/views/customer/auth/profile.blade.php
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white shadow-lg rounded-lg w-full max-w-md p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Edit Profile</h2>
+            <a href="{{ route('customer.dashboard') }}" class="text-blue-600 hover:underline text-sm">Back to Dashboard</a>
+        </div>
+
+        @if(session('success'))
+            <div class="bg-green-100 text-green-700 p-3 rounded mb-4 text-sm">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">
+                <ul class="list-disc list-inside">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <form action="{{ route('customer.profile.update') }}" method="POST" class="space-y-5">
+            @csrf
+            
+            <div>
+                <label class="block text-gray-700 mb-1" for="name">Name</label>
+                <input type="text" name="name" id="name" value="{{ old('name', $customer->name) }}" class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+
+            <div>
+                <label class="block text-gray-700 mb-1" for="email">Email</label>
+                <input type="email" name="email" id="email" value="{{ old('email', $customer->email) }}" class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+
+            <div class="border-t pt-4">
+                <p class="text-xs text-gray-500 mb-3">Leave password fields empty if you don't want to change it.</p>
+                
+                <label class="block text-gray-700 mb-1" for="password">New Password</label>
+                <input type="password" name="password" id="password" placeholder="Enter new password" class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div>
+                <label class="block text-gray-700 mb-1" for="password_confirmation">Confirm New Password</label>
+                <input type="password" name="password_confirmation" id="password_confirmation" placeholder="Confirm new password" class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition duration-200">
+                Update Profile
+            </button>
+        </form>
+    </div>
 
 </body>
 </html>
@@ -932,6 +940,7 @@ PHP_Laravel11_Custome_And_Breeze_Authentication
 ├── resources/views/customer/auth
 │   ├── register.blade.php
 │   ├── login.blade.php
+│   ├── profile.blade.php
 │   └── dashboard.blade.php
 ├── resources/views/auth   // Breeze Admin
 ├── database/migrations
