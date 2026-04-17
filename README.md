@@ -965,7 +965,12 @@ Custome side Screenshots:
 
 ### Customer Dashboard
 
-<img width="1919" height="1087" alt="Screenshot 2025-12-12 121217" src="https://github.com/user-attachments/assets/bb7f749e-80dd-4008-8dee-e4d6e3407064" />
+<img width="1911" height="907" alt="Screenshot 2026-04-17 151601" src="https://github.com/user-attachments/assets/4aa9d7db-712f-4d70-b351-39255924fc8b" />
+
+### Customer Profile
+
+<img width="1919" height="905" alt="Screenshot 2026-04-17 151501" src="https://github.com/user-attachments/assets/4d9ccfb4-abf2-4f6e-80c6-0ce70236ade0" />
+
 
 Breeze side Screen Shots:
 ---
